@@ -1,0 +1,36 @@
+# Caderneta de Campo — correção PWA
+
+Este pacote mantém as telas, os cálculos, os campos, a navegação e o armazenamento local da Caderneta. As únicas mudanças em `index.html` são os metadados/referências do PWA e o registro do Service Worker.
+
+## Publicação no GitHub Pages
+
+1. Abra o repositório `sdwwalter/v3_caderneta`.
+2. Na raiz do repositório, substitua `index.html` pelo `index.html` deste pacote.
+3. Envie também `manifest.webmanifest`, `service-worker.js` e a pasta `icons/` completa.
+4. Preserve todos esses caminhos e nomes exatamente como estão.
+5. Aguarde o GitHub Pages publicar e abra `https://sdwwalter.github.io/v3_caderneta/` novamente.
+
+Estrutura esperada:
+
+```text
+v3_caderneta/
+├── index.html
+├── manifest.webmanifest
+├── service-worker.js
+└── icons/
+    ├── icon-192.png
+    ├── icon-512.png
+    ├── icon-512-maskable.png
+    └── apple-touch-icon.png
+```
+
+## Instalação e uso offline
+
+- Abra a página publicada com internet e aguarde o carregamento completo para o Service Worker instalar e armazenar a estrutura básica.
+- No Chrome/Android, use a opção **Instalar app** ou **Adicionar à tela inicial**, conforme a versão do navegador.
+- No iPhone/iPad, use **Compartilhar → Adicionar à Tela de Início** no Safari.
+- O primeiro carregamento precisa de internet. Depois que o Service Worker for instalado, a página poderá abrir offline; as fontes externas do Google podem não carregar sem internet, mas há fontes locais de fallback.
+
+## Observação sobre atualização
+
+O cache está na versão `v1`. Se no futuro houver alteração de arquivos do PWA, incremente `caderneta-campo-shell-v1` em `service-worker.js` para forçar a renovação do cache.
