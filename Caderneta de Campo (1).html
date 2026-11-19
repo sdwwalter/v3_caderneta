@@ -1,0 +1,399 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Caderneta de Campo</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: coluna única, saldo como número principal no topo, abas grandes na base.
+   Uso ao sol: um só tema claro, tinta preta sobre branco, bordas de 2px, nada de cinza claro. Amarelo de sinalização só em ação principal. */
+:root{
+  --bg:#ffffff; --surface:#ffffff; --ink:#0b0d10; --muted:#2f3740; --line:#0b0d10; --soft:#c9ced4; --field:#ffffff;
+  --accent:#ffc400; --accent-ink:#0b0d10; --ok:#0a6b36; --ok-bg:#d9f5e3; --warn:#b00020; --warn-bg:#ffe1e1;
+  --f-disp:'Barlow Condensed','Arial Narrow',sans-serif; --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.35;font-weight:500;
+  padding-block:0 100px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surface);z-index:10}
+.wrap{max-width:560px;margin:0 auto}
+button,input{font:inherit;color:inherit}
+.num{font-family:var(--f-disp);font-variant-numeric:tabular-nums}
+
+/* cabeçalho fixo: saldo grande à esquerda, caminhões e trechos empilhados à direita */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border:2px solid var(--ink);border-top:0;
+  border-radius:0 0 14px 14px;padding:8px 10px 10px}
+.top-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
+.brand{font-family:var(--f-disp);font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.when{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tiles{display:grid;grid-template-columns:1.3fr 1fr;gap:8px}
+.tile{background:var(--surface);border:2px solid var(--ink);border-radius:10px;padding:4px 10px;min-width:0}
+.tile small{display:block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.tile b{font-family:var(--f-disp);font-weight:700;font-size:26px;line-height:1.05;font-variant-numeric:tabular-nums}
+.tile b span{font-size:15px;font-weight:700;margin-left:3px}
+.tile.hero{grid-row:1/3;display:flex;flex-direction:column;justify-content:center}
+.tile.hero b{font-size:54px;line-height:1}
+.tile.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.tile.warn{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.status{margin:8px 0 0;font-size:15px;font-weight:700;line-height:1.3}
+.status.ok{color:var(--ok)} .status.warn{color:var(--warn)}
+
+main{display:flex;flex-direction:column;gap:14px;padding-top:14px}
+.panel[hidden]{display:none!important}
+.card{background:var(--surface);border:2px solid var(--ink);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:14px}
+.card h2{margin:0;font-family:var(--f-disp);font-size:24px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.banner{background:var(--accent);color:var(--accent-ink);border:2px solid var(--ink);border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:15px;font-weight:700}
+.banner button{background:var(--ink);color:var(--accent);border:0;border-radius:10px;padding:8px 12px;font-weight:700;min-height:44px;white-space:nowrap}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2 .full{grid-column:1/-1}
+.f{display:flex;flex-direction:column;gap:5px;min-width:0}
+.f label,.lab{font-size:14px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+input[type=text],input[type=number],input[type=date],input[inputmode]{width:100%;min-height:58px;padding:8px 12px;border-radius:10px;border:2px solid var(--ink);
+  background:var(--field);font-size:26px;font-family:var(--f-disp);font-weight:700;font-variant-numeric:tabular-nums}
+input::placeholder{color:#6b737c;font-weight:500}
+input.txt{font-family:var(--f-body);font-size:18px;font-weight:600}
+input:focus-visible,button:focus-visible{outline:4px solid var(--accent);outline-offset:1px;box-shadow:0 0 0 2px var(--ink)}
+.pair{display:grid;grid-template-columns:1.25fr 1fr;gap:8px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.seg button{min-height:58px;border-radius:10px;border:2px solid var(--ink);background:var(--surface);font-weight:700;font-size:18px}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+.hint{font-size:14px;font-weight:500;color:var(--muted);margin:0}
+.preview{background:var(--surface);border:2px solid var(--ink);border-radius:10px;padding:10px 12px;font-size:16px;font-weight:600;min-height:48px}
+.preview.bad{background:var(--warn-bg);border-color:var(--warn);color:var(--warn);font-weight:700}
+.btn{min-height:58px;border-radius:12px;border:2px solid var(--ink);background:var(--surface);font-weight:700;font-size:18px;padding:0 16px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);font-family:var(--f-disp);font-size:24px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;min-height:64px}
+.btn.danger{color:var(--warn);border-color:var(--warn)}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.msg{min-height:20px;font-size:15px;font-weight:700;color:var(--warn);margin:0}
+
+.list{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.item{background:var(--surface);border:2px solid var(--ink);border-radius:14px;padding:10px 12px;display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center}
+.item.bad{border-color:var(--warn);background:var(--warn-bg)}
+.idx{grid-row:1/3;font-family:var(--f-disp);font-weight:700;font-size:24px;background:var(--ink);color:#fff;border-radius:8px;min-width:42px;height:42px;display:grid;place-items:center;padding:0 6px}
+.item .main{font-weight:700;font-size:18px;min-width:0;overflow-wrap:anywhere}
+.item .sub{font-size:14px;font-weight:500;grid-column:2/3;min-width:0;overflow-wrap:anywhere}
+.item .big{grid-column:3;grid-row:1/3;text-align:right;font-family:var(--f-disp);font-weight:700;font-size:32px;font-variant-numeric:tabular-nums;line-height:1}
+.item .big small{display:block;font-size:12px;font-weight:700;letter-spacing:.08em}
+.item .acts{grid-column:1/-1;display:flex;gap:8px;margin-top:8px}
+.item .acts button{flex:1;min-height:48px;border-radius:10px;border:2px solid var(--ink);background:var(--surface);font-weight:700}
+.item .acts button.arm{background:var(--warn);border-color:var(--warn);color:#fff}
+.empty{text-align:center;padding:18px 8px;border:2px dashed var(--ink);border-radius:14px;font-size:16px;font-weight:600}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{border:2px solid var(--ink);border-radius:10px;padding:8px 10px;min-width:0}
+.stat small{display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.stat b{font-family:var(--f-disp);font-weight:700;font-size:28px;font-variant-numeric:tabular-nums}
+.stat em{font-style:normal;font-size:14px;font-weight:700;margin-left:3px}
+details summary{cursor:pointer;font-family:var(--f-disp);font-weight:700;letter-spacing:.05em;text-transform:uppercase;font-size:24px;min-height:48px;display:flex;align-items:center}
+details[open] summary{margin-bottom:8px}
+textarea.copy{width:100%;min-height:120px;border:2px solid var(--ink);border-radius:10px;background:#fff;padding:8px;font:15px/1.3 ui-monospace,Menlo,monospace;color:var(--ink)}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:9;background:var(--surface);border-top:2px solid var(--ink);
+  padding:8px max(14px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}
+.tabs-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tabs button{min-height:58px;min-width:0;padding:0 4px;border-radius:12px;border:2px solid var(--ink);background:var(--surface);font-family:var(--f-disp);font-weight:700;font-size:19px;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--accent)}
+.tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;gap:2px}
+.tabs button span{font-size:14px;margin:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;padding:12px 18px;border-radius:999px;font-weight:700;font-size:16px;z-index:20;max-width:90vw}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="top-row"><span class="brand">Caderneta de Campo</span><span class="when" id="when"></span></div>
+    <div class="tiles">
+      <div class="tile hero" id="tileSaldo"><small>Saldo (caminhões − trechos)</small><b id="tSaldo">0,00<span>t</span></b></div>
+      <div class="tile"><small>Caminhões</small><b id="tCam">0,00<span>t</span></b></div>
+      <div class="tile"><small>Trechos</small><b id="tTr">0,00<span>t</span></b></div>
+    </div>
+    <p class="status" id="status"></p>
+  </header>
+
+  <main>
+    <div class="banner" id="banner" hidden><span>Folha de exemplo (18/11) carregada para teste.</span><button id="btnClear">Começar em branco</button></div>
+
+    <!-- TRECHOS -->
+    <section class="panel" id="p-tr" role="tabpanel">
+      <div class="card">
+        <h2 id="formTitle">Novo trecho</h2>
+        <div class="f"><span class="lab">Sentido das estacas desta folha</span>
+          <div class="seg" id="segSent"><button type="button" data-s="C" aria-pressed="true">Crescente</button><button type="button" data-s="D" aria-pressed="false">Decrescente</button></div>
+          <p class="hint" id="sentHint"></p></div>
+        <div class="grid2">
+          <div class="f full"><span class="lab">Estaca início</span>
+            <div class="pair"><input id="ei" inputmode="numeric" placeholder="15645" data-next="fi" enterkeyhint="next" autocomplete="off"><input id="fi" inputmode="decimal" placeholder="+ 10,0" data-next="ef" enterkeyhint="next" autocomplete="off" aria-label="Fração início em metros"></div></div>
+          <div class="f full"><span class="lab">Estaca final</span>
+            <div class="pair"><input id="ef" inputmode="numeric" placeholder="15647" data-next="ff" enterkeyhint="next" autocomplete="off"><input id="ff" inputmode="decimal" placeholder="+ 15,7" data-next="larg" enterkeyhint="next" autocomplete="off" aria-label="Fração final em metros"></div></div>
+          <div class="f full"><span class="lab">Lado</span>
+            <div class="seg" id="segLado"><button type="button" data-l="D" aria-pressed="true">D · direito</button><button type="button" data-l="E" aria-pressed="false">E · esquerdo</button></div></div>
+          <div class="f"><label for="larg">Largura (m)</label><input id="larg" inputmode="decimal" placeholder="3,45" data-next="esp" enterkeyhint="next" autocomplete="off"></div>
+          <div class="f"><label for="esp">Espessura (m)</label><input id="esp" inputmode="decimal" placeholder="0,0705" enterkeyhint="done" autocomplete="off"></div>
+        </div>
+        <div class="preview" id="preview">Preencha as estacas, largura e espessura.</div>
+        <p class="msg" id="msgTr" role="status"></p>
+        <div class="row"><button class="btn primary" id="btnAddTr" type="button">Adicionar trecho</button><button class="btn" id="btnCancelTr" type="button" hidden>Cancelar</button></div>
+      </div>
+      <h2 class="lab" style="margin:16px 4px 8px">Trechos lançados</h2>
+      <ul class="list" id="listTr"></ul>
+    </section>
+
+    <!-- CAMINHÕES -->
+    <section class="panel" id="p-cam" role="tabpanel" hidden>
+      <div class="card">
+        <h2>Novo caminhão</h2>
+        <div class="grid2">
+          <div class="f"><label for="placa">Placa</label><input id="placa" class="txt" type="text" autocapitalize="characters" autocomplete="off" placeholder="AFY1H98" data-next="peso" enterkeyhint="next"></div>
+          <div class="f"><label for="peso">Peso (t)</label><input id="peso" inputmode="decimal" placeholder="34,87" enterkeyhint="done" autocomplete="off"></div>
+        </div>
+        <p class="msg" id="msgCam" role="status"></p>
+        <button class="btn primary" id="btnAddCam" type="button">Adicionar caminhão</button>
+      </div>
+      <h2 class="lab" style="margin:16px 4px 8px">Caminhões lançados</h2>
+      <ul class="list" id="listCam"></ul>
+    </section>
+
+    <!-- RESUMO -->
+    <section class="panel" id="p-res" role="tabpanel" hidden>
+      <div class="card"><h2>Totais do dia</h2><div class="stats" id="stats"></div></div>
+      <div class="card" style="margin-top:12px"><h2>Levar para a planilha</h2>
+        <p class="hint">Cole nas tabelas de lançamento da planilha, uma de cada vez. Os números saem com vírgula decimal.</p>
+        <button class="btn" id="cpTr" type="button">Copiar trechos</button>
+        <button class="btn" id="cpCam" type="button">Copiar caminhões</button>
+        <button class="btn" id="cpRes" type="button">Copiar resumo do dia (texto)</button>
+        <div id="fallback" hidden><p class="hint">Seu navegador bloqueou a cópia automática. Toque no texto, selecione tudo e copie.</p><textarea class="copy" id="fbText" readonly></textarea></div>
+      </div>
+      <div class="card" style="margin-top:12px"><details><summary>Cabeçalho da folha</summary>
+        <div class="grid2">
+          <div class="f"><label for="cData">Data</label><input id="cData" type="date"></div>
+          <div class="f"><label for="cDens">Densidade</label><input id="cDens" inputmode="decimal"></div>
+          <div class="f"><label for="cFaixa">Faixa</label><input id="cFaixa" class="txt" type="text"></div>
+          <div class="f"><label for="cEquipe">Equipe</label><input id="cEquipe" class="txt" type="text"></div>
+          <div class="f"><label for="cRod">Rodovia</label><input id="cRod" class="txt" type="text"></div>
+          <div class="f"><label for="cCont">Contrato</label><input id="cCont" class="txt" type="text"></div>
+          <div class="f full"><label for="cTrecho">Trecho</label><input id="cTrecho" class="txt" type="text"></div>
+          <div class="f"><label for="cUsina">Usina</label><input id="cUsina" class="txt" type="text"></div>
+          <div class="f"><label for="cServ">Serviço</label><input id="cServ" class="txt" type="text"></div>
+        </div></details></div>
+      <div class="card" style="margin-top:12px"><h2>Nova folha</h2>
+        <p class="hint">Apaga caminhões e trechos deste celular. Copie antes.</p>
+        <button class="btn danger" id="btnNew" type="button">Limpar folha</button></div>
+      <p class="hint" style="text-align:center;margin:16px 0 0">Os dados ficam salvos neste celular. Com a página já aberta, ela continua funcionando sem sinal.</p>
+    </section>
+  </main>
+</div>
+
+<nav class="tabs" aria-label="Seções"><div class="tabs-in" role="tablist">
+  <button role="tab" data-t="tr" aria-selected="true">Trechos<span id="nTr">0</span></button>
+  <button role="tab" data-t="cam" aria-selected="false">Caminhões<span id="nCam">0</span></button>
+  <button role="tab" data-t="res" aria-selected="false">Resumo</button>
+</div></nav>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+var KEY='caderneta.campo.v2';
+var $=function(s){return document.querySelector(s)};
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function num(v){if(v==null)return NaN;v=String(v).trim().replace(',','.');return v===''?NaN:parseFloat(v)}
+function fmt(n,d){if(!isFinite(n))n=0;return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function brDate(iso){var p=(iso||'').split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:''}
+
+function example(){return {ex:true,
+  cab:{data:'2026-11-18',faixa:'C',equipe:'',rod:'PR 090',contrato:'CO 026/2026',trecho:'São Jerônimo da Serra',usina:'Usicap',serv:'Remendo Superficial',dens:'2,57',sentido:'C'},
+  trk:[['AFY1H98',34.87],['AFM0I52',24.18],['KKD8A83',30.08],['AKR5I84',22.88],['ICS9I17',22.37],['AEG8373',24.98]].map(function(a){return {placa:a[0],peso:a[1]}}),
+  tr:[[15645,10,15647,15.7,3.45,0.0705],[15648,9,15650,2.9,3.4,0.0703],[15651,1.5,15653,2.5,3.35,0.0715],[15660,11.3,15661,13.9,1.95,0.079],
+      [15662,10.5,15664,18.3,3.4,0.0799],[15665,12.2,15666,19.6,2,0.0799],[15666,19.7,15668,9.5,3.4,0.07],[15668,12.8,15670,5.7,2,0.07645]]
+      .map(function(a){return {ei:a[0],fi:a[1],ef:a[2],ff:a[3],lado:'D',larg:a[4],esp:a[5]}})}}
+function blank(){return {ex:false,cab:{data:today(),faixa:'',equipe:'',rod:'',contrato:'',trecho:'',usina:'',serv:'',dens:'2,57',sentido:'C'},trk:[],tr:[]}}
+var S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
+if(!S||!S.cab)S=example();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+var lado='D', editing=null, tab='tr';
+function dens(){var d=num(S.cab.dens);return d>0?d:2.57}
+function calc(t){
+  var comp=S.cab.sentido==='D'?(t.ei-t.ef)*20+t.fi-t.ff:(t.ef-t.ei)*20-t.fi+t.ff;
+  var area=comp*t.larg, vol=area*t.esp;
+  return {comp:comp,area:area,vol:vol,ton:vol*dens()};
+}
+function totals(){
+  var o={comp:0,area:0,vol:0,ton:0,cam:0,bad:0};
+  S.tr.forEach(function(t){var c=calc(t);o.comp+=c.comp;o.area+=c.area;o.vol+=c.vol;o.ton+=c.ton;if(c.comp<=0)o.bad++});
+  S.trk.forEach(function(k){o.cam+=k.peso});
+  o.saldo=o.cam-o.ton;return o;
+}
+
+/* ---------- renderização ---------- */
+function renderHead(){
+  var t=totals();
+  $('#when').textContent=[brDate(S.cab.data),S.cab.faixa?'Faixa '+S.cab.faixa:''].filter(Boolean).join(' · ');
+  $('#tCam').innerHTML=fmt(t.cam,2)+'<span>t</span>';
+  $('#tTr').innerHTML=fmt(t.ton,2)+'<span>t</span>';
+  $('#tSaldo').innerHTML=fmt(t.saldo,2)+'<span>t</span>';
+  var tile=$('#tileSaldo'), st=$('#status'); tile.className='tile hero'; st.className='status';
+  var msg='';
+  if(!S.trk.length&&!S.tr.length){msg='Lance os caminhões e os trechos. O saldo mostra quanto buraco ainda cabe.'}
+  else if(Math.abs(t.saldo)<=1){tile.classList.add('ok');st.classList.add('ok');msg='Fechado: a massa recebida cobre os buracos lançados (diferença até 1 t).'}
+  else if(t.saldo>0){
+    var last=S.tr[S.tr.length-1], esp=last?last.esp:0.07, larg=last?last.larg:3.5;
+    var m2=t.saldo/(esp*dens()), m=m2/larg;
+    tile.classList.add('ok');st.classList.add('ok');
+    msg='Sobram '+fmt(t.saldo,2)+' t: dá para abrir ≈ '+fmt(m2,0)+' m² (≈ '+fmt(m,0)+' m na largura de '+fmt(larg,2)+' m) a '+fmt(esp,4)+' m de espessura.';
+  }else{tile.classList.add('warn');st.classList.add('warn');msg='Os buracos lançados pedem '+fmt(-t.saldo,2)+' t a mais do que os caminhões lançados.'}
+  if(t.bad){msg+=' Atenção: '+t.bad+' trecho(s) com comprimento zero ou negativo.'}
+  st.textContent=msg;
+  $('#nTr').textContent=S.tr.length;$('#nCam').textContent=S.trk.length;
+  $('#banner').hidden=!S.ex;
+}
+function renderTr(){
+  var ul=$('#listTr');
+  if(!S.tr.length){ul.innerHTML='<li class="empty">Nenhum trecho ainda. O primeiro que você adicionar aparece aqui.</li>';return}
+  var h='';
+  for(var i=S.tr.length-1;i>=0;i--){
+    var t=S.tr[i],c=calc(t),bad=c.comp<=0;
+    h+='<li class="item'+(bad?' bad':'')+'"><span class="idx">'+(i+1)+'</span>'+
+      '<span class="main">'+t.ei+'+'+fmt(t.fi,1)+' → '+t.ef+'+'+fmt(t.ff,1)+' · '+t.lado+'</span>'+
+      '<span class="big">'+fmt(c.ton,2)+'<small>TON</small></span>'+
+      '<span class="sub">'+(bad?'Comprimento '+fmt(c.comp,1)+' m: confira o sentido das estacas. ':'')+fmt(c.comp,1)+' m × '+fmt(t.larg,2)+' m × '+fmt(t.esp,4)+' m = '+fmt(c.vol,3)+' m³</span>'+
+      '<span class="acts"><button data-act="edit" data-i="'+i+'">Editar</button><button data-act="del" data-i="'+i+'">Excluir</button></span></li>';
+  }
+  ul.innerHTML=h;
+}
+function renderCam(){
+  var ul=$('#listCam');
+  if(!S.trk.length){ul.innerHTML='<li class="empty">Nenhum caminhão ainda.</li>';return}
+  var acc=0,rows=S.trk.map(function(k,i){acc+=k.peso;return {k:k,i:i,acc:acc}}),h='';
+  for(var j=rows.length-1;j>=0;j--){var r=rows[j];
+    h+='<li class="item"><span class="idx">'+(r.i+1)+'</span><span class="main">'+esc(r.k.placa)+'</span>'+
+      '<span class="big">'+fmt(r.k.peso,2)+'<small>TON</small></span><span class="sub">acumulado '+fmt(r.acc,2)+' t</span>'+
+      '<span class="acts"><button data-act="delc" data-i="'+r.i+'">Excluir</button></span></li>';}
+  ul.innerHTML=h;
+}
+function renderRes(){
+  var t=totals(),area=t.area;
+  var espLan=area>0?t.vol/area:0, espPeso=area>0?t.cam/(area*dens()):0;
+  var items=[['Caminhões',S.trk.length,''],['Trechos',S.tr.length,''],['Ton. caminhões',fmt(t.cam,2),'t'],['Ton. do dia (calc.)',fmt(t.ton,2),'t'],
+    ['Diferença (cam − calc.)',fmt(t.saldo,2),'t'],['Comprimento',fmt(t.comp,1),'m'],['Área',fmt(t.area,2),'m²'],['Volume',fmt(t.vol,3),'m³'],
+    ['Espessura média lançada',fmt(espLan,4),'m'],['Espessura pelo peso dos caminhões',fmt(espPeso,4),'m']];
+  $('#stats').innerHTML=items.map(function(a){return '<div class="stat"><small>'+a[0]+'</small><b>'+a[1]+'</b><em>'+a[2]+'</em></div>'}).join('');
+  var c=S.cab;
+  $('#cData').value=c.data||'';$('#cDens').value=c.dens||'';$('#cFaixa').value=c.faixa||'';$('#cEquipe').value=c.equipe||'';
+  $('#cRod').value=c.rod||'';$('#cCont').value=c.contrato||'';$('#cTrecho').value=c.trecho||'';$('#cUsina').value=c.usina||'';$('#cServ').value=c.serv||'';
+}
+function renderSent(){
+  var D=S.cab.sentido==='D';
+  document.querySelectorAll('#segSent button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.s===S.cab.sentido))});
+  $('#sentHint').textContent=D?'Decrescente: comprimento = (início − final) × 20 + frac. início − frac. final':'Crescente: comprimento = (final − início) × 20 − frac. início + frac. final';
+}
+function renderLado(){document.querySelectorAll('#segLado button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.l===lado))})}
+function renderTab(){
+  ['tr','cam','res'].forEach(function(k){$('#p-'+k).hidden=(k!==tab)});
+  document.querySelectorAll('.tabs button').forEach(function(b){b.setAttribute('aria-selected',String(b.dataset.t===tab))});
+}
+function renderAll(){renderHead();renderTr();renderCam();renderRes();renderSent();renderLado();renderTab();updatePreview()}
+
+/* ---------- formulário de trecho ---------- */
+function readTr(){
+  var f=function(id){return num($('#'+id).value)};
+  var t={ei:f('ei'),fi:f('fi'),ef:f('ef'),ff:f('ff'),lado:lado,larg:f('larg'),esp:f('esp')};
+  if(isNaN(t.fi))t.fi=0; if(isNaN(t.ff))t.ff=0; return t;
+}
+function validTr(t){return isFinite(t.ei)&&isFinite(t.ef)&&t.larg>0&&t.esp>0&&t.esp<1}
+function updatePreview(){
+  var t=readTr(),p=$('#preview');p.className='preview';
+  if(!validTr(t)){p.textContent=(t.esp>=1?'Espessura em metros, por exemplo 0,0705.':'Preencha as estacas, largura e espessura.');return}
+  var c=calc(t);
+  if(c.comp<=0){p.classList.add('bad');p.textContent='Comprimento '+fmt(c.comp,1)+' m. Confira o sentido das estacas desta folha.';return}
+  p.innerHTML='<b class="num" style="font-size:20px">'+fmt(c.comp,1)+' m</b> · '+fmt(c.area,2)+' m² · '+fmt(c.vol,3)+' m³ · <b class="num" style="font-size:20px">'+fmt(c.ton,2)+' t</b>';
+}
+function addTr(){
+  var t=readTr(),m=$('#msgTr');
+  if(!validTr(t)){m.textContent=(t.esp>=1?'Espessura em metros, por exemplo 0,0705.':'Preencha estaca início, estaca final, largura e espessura.');return}
+  m.textContent='';
+  if(editing!==null){S.tr[editing]=t;toast('Trecho '+(editing+1)+' atualizado');endEdit()}
+  else{S.tr.push(t);toast('Trecho '+S.tr.length+' adicionado')}
+  ['ei','fi','ef','ff'].forEach(function(id){$('#'+id).value=''});
+  save();renderAll();$('#ei').focus();
+}
+function endEdit(){editing=null;$('#formTitle').textContent='Novo trecho';$('#btnAddTr').textContent='Adicionar trecho';$('#btnCancelTr').hidden=true}
+function startEdit(i){
+  var t=S.tr[i];editing=i;lado=t.lado;
+  $('#ei').value=t.ei;$('#fi').value=String(t.fi).replace('.',',');$('#ef').value=t.ef;$('#ff').value=String(t.ff).replace('.',',');
+  $('#larg').value=String(t.larg).replace('.',',');$('#esp').value=String(t.esp).replace('.',',');
+  $('#formTitle').textContent='Editando trecho '+(i+1);$('#btnAddTr').textContent='Salvar alteração';$('#btnCancelTr').hidden=false;
+  renderLado();updatePreview();window.scrollTo({top:0,behavior:'smooth'});$('#ei').focus();
+}
+
+/* ---------- caminhões ---------- */
+function addCam(){
+  var placa=$('#placa').value.trim().toUpperCase(),peso=num($('#peso').value),m=$('#msgCam');
+  if(!placa||!(peso>0)){m.textContent='Informe a placa e o peso.';return}
+  m.textContent='';S.trk.push({placa:placa,peso:peso});save();
+  $('#placa').value='';$('#peso').value='';renderAll();toast('Caminhão '+S.trk.length+' adicionado');$('#placa').focus();
+}
+
+/* ---------- copiar ---------- */
+function showFallback(text){$('#fallback').hidden=false;var a=$('#fbText');a.value=text;a.focus();a.select()}
+function copy(text,okMsg){
+  $('#fallback').hidden=true;
+  var done=function(){toast(okMsg)};
+  try{navigator.clipboard.writeText(text).then(done,function(){showFallback(text)})}catch(e){showFallback(text)}
+}
+function dec(n,d){return fmt(n,d).replace(/\./g,'')}
+function tsvTr(){return S.tr.map(function(t){return [t.ei,dec(t.fi,1),t.ef,dec(t.ff,1),t.lado,dec(t.larg,2),String(+(+t.esp).toFixed(5)).replace('.',',')].join('\t')}).join('\n')}
+function tsvCam(){return S.trk.map(function(k){return k.placa+'\t'+dec(k.peso,2)}).join('\n')}
+function resumo(){
+  var t=totals(),c=S.cab;
+  return ['CADERNETA DE CAMPO · '+brDate(c.data)+(c.rod?' · '+c.rod:'')+(c.faixa?' · Faixa '+c.faixa:'')+(c.equipe?' · '+c.equipe:''),
+    'Estacas '+(c.sentido==='D'?'decrescentes':'crescentes'),
+    'Caminhões: '+S.trk.length+' · '+fmt(t.cam,2)+' t',
+    'Trechos: '+S.tr.length+' · '+fmt(t.area,2)+' m² · '+fmt(t.vol,3)+' m³ · '+fmt(t.ton,2)+' t',
+    'Diferença (cam − calc.): '+fmt(t.saldo,2)+' t'].join('\n');
+}
+
+/* ---------- util ---------- */
+var tt;function toast(m){var e=$('#toast');e.textContent=m;e.hidden=false;clearTimeout(tt);tt=setTimeout(function(){e.hidden=true},1800)}
+var armT;function arm(btn,fn){
+  if(btn.classList.contains('arm')){clearTimeout(armT);fn();return}
+  document.querySelectorAll('.arm').forEach(function(b){b.classList.remove('arm');b.textContent='Excluir'});
+  btn.classList.add('arm');btn.textContent='Toque de novo para excluir';
+  clearTimeout(armT);armT=setTimeout(function(){btn.classList.remove('arm');btn.textContent='Excluir'},3000);
+}
+
+/* ---------- eventos ---------- */
+document.querySelectorAll('.tabs button').forEach(function(b){b.addEventListener('click',function(){tab=b.dataset.t;renderTab();window.scrollTo({top:0})})});
+document.querySelectorAll('#segSent button').forEach(function(b){b.addEventListener('click',function(){S.cab.sentido=b.dataset.s;save();renderAll()})});
+document.querySelectorAll('#segLado button').forEach(function(b){b.addEventListener('click',function(){lado=b.dataset.l;renderLado();updatePreview()})});
+['ei','fi','ef','ff','larg','esp'].forEach(function(id){$('#'+id).addEventListener('input',updatePreview)});
+function enterFlow(id,last){$('#'+id).addEventListener('keydown',function(e){
+  if(e.key!=='Enter')return;e.preventDefault();var n=this.dataset.next;if(n)$('#'+n).focus();else last()})}
+['ei','fi','ef','ff','larg','esp'].forEach(function(id){enterFlow(id,addTr)});
+['placa','peso'].forEach(function(id){enterFlow(id,addCam)});
+$('#btnAddTr').addEventListener('click',addTr);
+$('#btnCancelTr').addEventListener('click',function(){endEdit();['ei','fi','ef','ff'].forEach(function(id){$('#'+id).value=''});updatePreview()});
+$('#btnAddCam').addEventListener('click',addCam);
+$('#listTr').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var i=+b.dataset.i;
+  if(b.dataset.act==='edit')startEdit(i);
+  if(b.dataset.act==='del')arm(b,function(){S.tr.splice(i,1);if(editing!==null)endEdit();save();renderAll();toast('Trecho excluído')})});
+$('#listCam').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var i=+b.dataset.i;
+  if(b.dataset.act==='delc')arm(b,function(){S.trk.splice(i,1);save();renderAll();toast('Caminhão excluído')})});
+$('#cpTr').addEventListener('click',function(){copy(tsvTr(),'Trechos copiados')});
+$('#cpCam').addEventListener('click',function(){copy(tsvCam(),'Caminhões copiados')});
+$('#cpRes').addEventListener('click',function(){copy(resumo(),'Resumo copiado')});
+var hdr={cData:'data',cDens:'dens',cFaixa:'faixa',cEquipe:'equipe',cRod:'rod',cCont:'contrato',cTrecho:'trecho',cUsina:'usina',cServ:'serv'};
+Object.keys(hdr).forEach(function(id){$('#'+id).addEventListener('input',function(){S.cab[hdr[id]]=this.value;save();renderHead();renderTr();updatePreview()})});
+$('#btnClear').addEventListener('click',function(){S=blank();save();renderAll();toast('Folha em branco')});
+var nT;$('#btnNew').addEventListener('click',function(){var b=this;
+  if(b.dataset.arm){var c=S.cab;S=blank();S.cab.rod=c.rod;S.cab.contrato=c.contrato;S.cab.trecho=c.trecho;S.cab.usina=c.usina;S.cab.serv=c.serv;S.cab.dens=c.dens;S.cab.faixa=c.faixa;S.cab.equipe=c.equipe;
+    save();renderAll();b.dataset.arm='';b.textContent='Limpar folha';toast('Folha nova');return}
+  b.dataset.arm='1';b.textContent='Toque de novo para apagar tudo';clearTimeout(nT);nT=setTimeout(function(){b.dataset.arm='';b.textContent='Limpar folha'},3000)});
+window.__caderneta={totals:totals,calc:calc,S:function(){return S}};
+renderAll();
+})();
+</script>
+
+</body></html>
