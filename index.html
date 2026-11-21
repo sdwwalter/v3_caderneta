@@ -1,18 +1,18 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Caderneta de Campo</title>
-<meta name="description" content="Registro de caminhões, trechos e massa aplicada em campo.">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#0b0d10">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Caderneta">
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
-</head><body>
 <style>
 /* Layout: coluna única, saldo como número principal no topo, abas grandes na base.
    Uso ao sol: um só tema claro, tinta preta sobre branco, bordas de 2px, nada de cinza claro. Amarelo de sinalização só em ação principal. */
@@ -107,11 +107,33 @@ textarea.copy{width:100%;min-height:120px;border:2px solid var(--ink);border-rad
 .tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05;gap:2px}
 .tabs button span{font-size:14px;margin:0}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));background:var(--ink);color:#fff;padding:12px 18px;border-radius:999px;font-weight:700;font-size:16px;z-index:20;max-width:90vw}
-</style>
 
+/* menu sanduíche e histórico */
+.top-row{align-items:center}.brand{flex:1}
+.menu-btn{width:48px;height:48px;flex:none;border:2px solid var(--ink);border-radius:12px;background:var(--surface);display:grid;place-items:center;padding:0}
+.menu-btn svg{width:26px;height:26px;display:block}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:30;border:0;padding:0}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(86vw,330px);background:var(--surface);border-right:2px solid var(--ink);z-index:31;display:flex;flex-direction:column;gap:10px;
+  padding:calc(14px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}
+.drawer h2{margin:0 0 4px;font-family:var(--f-disp);font-size:24px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.drawer .nav{min-height:62px;text-align:left;padding:0 14px;border-radius:12px;border:2px solid var(--ink);background:var(--surface);font-weight:700;font-size:19px}
+.drawer .nav[aria-current=page]{background:var(--ink);color:var(--accent)}
+.drawer .nav small{display:block;font-size:13px;font-weight:500}
+body.hist .tiles,body.hist .status,body.hist .when,body.hist .banner,body.hist .tabs{display:none}
+.item.hist{grid-template-columns:1fr auto}
+.item.hist .main,.item.hist .sub{grid-column:1}.item.hist .big{grid-column:2}
+.item.hist .main{font-family:var(--f-disp);font-size:24px;font-weight:700}
+[hidden]{display:none!important}
+
+/* PWA: o que o ambiente do artifact fazia sozinho */
+html,body{margin:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+</style>
+</head>
+<body>
 <div class="wrap">
   <header class="top">
-    <div class="top-row"><span class="brand">Caderneta de Campo</span><span class="when" id="when"></span></div>
+    <div class="top-row"><button class="menu-btn" id="btnMenu" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg></button><span class="brand" id="brand">Caderneta de Campo</span><span class="when" id="when"></span></div>
     <div class="tiles">
       <div class="tile hero" id="tileSaldo"><small>Saldo (caminhões − trechos)</small><b id="tSaldo">0,00<span>t</span></b></div>
       <div class="tile"><small>Caminhões</small><b id="tCam">0,00<span>t</span></b></div>
@@ -175,6 +197,7 @@ textarea.copy{width:100%;min-height:120px;border:2px solid var(--ink);border-rad
       </div>
       <div class="card" style="margin-top:12px"><details><summary>Cabeçalho da folha</summary>
         <div class="grid2">
+          <div class="f full"><label for="cEmp">Empresa</label><input id="cEmp" class="txt" type="text"></div>
           <div class="f"><label for="cData">Data</label><input id="cData" type="date"></div>
           <div class="f"><label for="cDens">Densidade</label><input id="cDens" inputmode="decimal"></div>
           <div class="f"><label for="cFaixa">Faixa</label><input id="cFaixa" class="txt" type="text"></div>
@@ -188,7 +211,16 @@ textarea.copy{width:100%;min-height:120px;border:2px solid var(--ink);border-rad
       <div class="card" style="margin-top:12px"><h2>Nova folha</h2>
         <p class="hint">Apaga caminhões e trechos deste celular. Copie antes.</p>
         <button class="btn danger" id="btnNew" type="button">Limpar folha</button></div>
-      <p class="hint" style="text-align:center;margin:16px 0 0">Os dados ficam salvos neste celular. Com a página já aberta, ela continua funcionando sem sinal.</p>
+      <p class="hint" id="offlineNote" style="text-align:center;margin:16px 0 0">Os dados ficam salvos neste celular.</p>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section class="panel" id="p-hist" role="tabpanel" hidden>
+      <button class="btn" id="btnBack" type="button">← Voltar para a folha</button>
+      <div class="card" style="margin-top:14px"><h2>Histórico de dias</h2>
+        <p class="hint">Cada dia guarda só o total de toneladas, de caminhões e de área. Ele entra aqui sozinho enquanto você lança.</p>
+        <div class="stats" id="histTot"></div></div>
+      <ul class="list" id="listHist" style="margin-top:14px"></ul>
     </section>
   </main>
 </div>
@@ -199,6 +231,12 @@ textarea.copy{width:100%;min-height:120px;border:2px solid var(--ink);border-rad
   <button role="tab" data-t="res" aria-selected="false">Resumo</button>
 </div></nav>
 <div class="toast" id="toast" hidden></div>
+<button class="scrim" id="scrim" type="button" aria-label="Fechar menu" hidden></button>
+<aside class="drawer" id="drawer" aria-label="Menu" hidden>
+  <h2>Menu</h2>
+  <button class="nav" id="navFolha" type="button">Folha atual<small>Lançar trechos e caminhões</small></button>
+  <button class="nav" id="navHist" type="button">Histórico de dias<small>Toneladas, caminhões e área por dia</small></button>
+</aside>
 
 <script>
 (function(){
@@ -207,21 +245,36 @@ var KEY='caderneta.campo.v2';
 var $=function(s){return document.querySelector(s)};
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function num(v){if(v==null)return NaN;v=String(v).trim().replace(',','.');return v===''?NaN:parseFloat(v)}
-function fmt(n,d){if(!isFinite(n))n=0;return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function fmt(n,d){if(!isFinite(n))n=0;n=n+(n<0?-1:1)*1e-9;return n.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d})}
 function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function brDate(iso){var p=(iso||'').split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:''}
 
+var DEF={emp:'GAISSLER MOREIRA ENGENHARIA',contrato:'CO 026/2026',rod:'PR 090',usina:'Usicap',dens:'2,57',trecho:'São Jerônimo da Serra',faixa:'C',serv:'Remendo Superficial',equipe:'Elvis'};
+function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 function example(){return {ex:true,
-  cab:{data:'2026-11-18',faixa:'C',equipe:'',rod:'PR 090',contrato:'CO 026/2026',trecho:'São Jerônimo da Serra',usina:'Usicap',serv:'Remendo Superficial',dens:'2,57',sentido:'C'},
+  id:'ex',cab:Object.assign({},DEF,{data:'2026-11-18',sentido:'C'}),
   trk:[['AFY1H98',34.87],['AFM0I52',24.18],['KKD8A83',30.08],['AKR5I84',22.88],['ICS9I17',22.37],['AEG8373',24.98]].map(function(a){return {placa:a[0],peso:a[1]}}),
   tr:[[15645,10,15647,15.7,3.45,0.0705],[15648,9,15650,2.9,3.4,0.0703],[15651,1.5,15653,2.5,3.35,0.0715],[15660,11.3,15661,13.9,1.95,0.079],
       [15662,10.5,15664,18.3,3.4,0.0799],[15665,12.2,15666,19.6,2,0.0799],[15666,19.7,15668,9.5,3.4,0.07],[15668,12.8,15670,5.7,2,0.07645]]
       .map(function(a){return {ei:a[0],fi:a[1],ef:a[2],ff:a[3],lado:'D',larg:a[4],esp:a[5]}})}}
-function blank(){return {ex:false,cab:{data:today(),faixa:'',equipe:'',rod:'',contrato:'',trecho:'',usina:'',serv:'',dens:'2,57',sentido:'C'},trk:[],tr:[]}}
+function blank(){return {ex:false,id:newId(),cab:Object.assign({},DEF,{data:today(),sentido:'C'}),trk:[],tr:[]}}
 var S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S||!S.cab)S=example();
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+S.cab=Object.assign({},DEF,{sentido:'C'},S.cab); if(!S.id)S.id=newId();
+var HKEY='caderneta.hist.v1',H;
+try{H=JSON.parse(localStorage.getItem(HKEY))}catch(e){H=null}
+if(!Array.isArray(H))H=[];
+function saveH(){try{localStorage.setItem(HKEY,JSON.stringify(H))}catch(e){}}
+/* histórico: guarda só toneladas do dia (calculadas), nº de caminhões e área total */
+function syncHist(){
+  if(S.ex||!S.id||(!S.tr.length&&!S.trk.length))return;
+  var t=totals(),e={id:S.id,data:S.cab.data||'',ton:+t.ton.toFixed(3),cam:S.trk.length,area:+t.area.toFixed(3)};
+  var i=-1;for(var k=0;k<H.length;k++){if(H[k].id===S.id){i=k;break}}
+  if(i>=0)H[i]=e;else H.push(e);
+  saveH();
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}try{syncHist()}catch(e){}}
 
 var lado='D', editing=null, tab='tr';
 function dens(){var d=num(S.cab.dens);return d>0?d:2.57}
@@ -291,7 +344,7 @@ function renderRes(){
     ['Espessura média lançada',fmt(espLan,4),'m'],['Espessura pelo peso dos caminhões',fmt(espPeso,4),'m']];
   $('#stats').innerHTML=items.map(function(a){return '<div class="stat"><small>'+a[0]+'</small><b>'+a[1]+'</b><em>'+a[2]+'</em></div>'}).join('');
   var c=S.cab;
-  $('#cData').value=c.data||'';$('#cDens').value=c.dens||'';$('#cFaixa').value=c.faixa||'';$('#cEquipe').value=c.equipe||'';
+  $('#cEmp').value=c.emp||'';$('#cData').value=c.data||'';$('#cDens').value=c.dens||'';$('#cFaixa').value=c.faixa||'';$('#cEquipe').value=c.equipe||'';
   $('#cRod').value=c.rod||'';$('#cCont').value=c.contrato||'';$('#cTrecho').value=c.trecho||'';$('#cUsina').value=c.usina||'';$('#cServ').value=c.serv||'';
 }
 function renderSent(){
@@ -300,9 +353,27 @@ function renderSent(){
   $('#sentHint').textContent=D?'Decrescente: comprimento = (início − final) × 20 + frac. início − frac. final':'Crescente: comprimento = (final − início) × 20 − frac. início + frac. final';
 }
 function renderLado(){document.querySelectorAll('#segLado button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.l===lado))})}
+var view='folha';
 function renderTab(){
-  ['tr','cam','res'].forEach(function(k){$('#p-'+k).hidden=(k!==tab)});
+  ['tr','cam','res','hist'].forEach(function(k){$('#p-'+k).hidden=(view==='hist'?k!=='hist':k!==tab)});
   document.querySelectorAll('.tabs button').forEach(function(b){b.setAttribute('aria-selected',String(b.dataset.t===tab))});
+  document.body.classList.toggle('hist',view==='hist');
+  $('#brand').textContent=view==='hist'?'Histórico de dias':'Caderneta de Campo';
+  $('#navFolha').setAttribute('aria-current',view==='folha'?'page':'false');
+  $('#navHist').setAttribute('aria-current',view==='hist'?'page':'false');
+}
+function setView(v){view=v;renderTab();if(v==='hist')renderHist();window.scrollTo({top:0})}
+function renderHist(){
+  var L=H.slice().sort(function(a,b){return a.data<b.data?1:(a.data>b.data?-1:0)});
+  var sT=0,sC=0,sA=0;L.forEach(function(e){sT+=e.ton;sC+=e.cam;sA+=e.area});
+  $('#histTot').innerHTML=[['Dias',L.length,''],['Toneladas',fmt(sT,2),'t'],['Caminhões',sC,''],['Área',fmt(sA,2),'m²']]
+    .map(function(a){return '<div class="stat"><small>'+a[0]+'</small><b>'+a[1]+'</b><em>'+a[2]+'</em></div>'}).join('');
+  var ul=$('#listHist');
+  if(!L.length){ul.innerHTML='<li class="empty">Nenhum dia salvo ainda. O dia entra aqui assim que você lança o primeiro caminhão ou trecho.</li>';return}
+  ul.innerHTML=L.map(function(e){
+    return '<li class="item hist"><span class="main">'+(brDate(e.data)||'Sem data')+'</span><span class="big">'+fmt(e.ton,2)+'<small>TON DO DIA</small></span>'+
+      '<span class="sub">'+e.cam+(e.cam===1?' caminhão':' caminhões')+' · '+fmt(e.area,2)+' m²</span>'+
+      '<span class="acts"><button data-act="delh" data-id="'+esc(e.id)+'">Excluir</button></span></li>'}).join('');
 }
 function renderAll(){renderHead();renderTr();renderCam();renderRes();renderSent();renderLado();renderTab();updatePreview()}
 
@@ -357,12 +428,18 @@ function dec(n,d){return fmt(n,d).replace(/\./g,'')}
 function tsvTr(){return S.tr.map(function(t){return [t.ei,dec(t.fi,1),t.ef,dec(t.ff,1),t.lado,dec(t.larg,2),String(+(+t.esp).toFixed(5)).replace('.',',')].join('\t')}).join('\n')}
 function tsvCam(){return S.trk.map(function(k){return k.placa+'\t'+dec(k.peso,2)}).join('\n')}
 function resumo(){
-  var t=totals(),c=S.cab;
-  return ['CADERNETA DE CAMPO · '+brDate(c.data)+(c.rod?' · '+c.rod:'')+(c.faixa?' · Faixa '+c.faixa:'')+(c.equipe?' · '+c.equipe:''),
-    'Estacas '+(c.sentido==='D'?'decrescentes':'crescentes'),
-    'Caminhões: '+S.trk.length+' · '+fmt(t.cam,2)+' t',
-    'Trechos: '+S.tr.length+' · '+fmt(t.area,2)+' m² · '+fmt(t.vol,3)+' m³ · '+fmt(t.ton,2)+' t',
-    'Diferença (cam − calc.): '+fmt(t.saldo,2)+' t'].join('\n');
+  var t=totals(),c=S.cab,esp=t.area>0?t.vol/t.area:0,L=['RELATÓRIO DO DIA · '+brDate(c.data)];
+  if(c.contrato)L.push('Contrato: '+c.contrato);
+  var loc=[c.emp,c.rod,c.trecho,c.faixa?'Faixa '+c.faixa:''].filter(Boolean).join(' · ');if(loc)L.push(loc);
+  var op=[c.serv?'Serviço: '+c.serv:'',c.usina?'Usina: '+c.usina:'',c.equipe?'Equipe: '+c.equipe:''].filter(Boolean).join(' · ');if(op)L.push(op);
+  L.push('Estacas '+(c.sentido==='D'?'decrescentes':'crescentes'));
+  L.push('Caminhões: '+S.trk.length);
+  L.push('Área total: '+fmt(t.area,2)+' m²');
+  L.push('Volume total: '+fmt(t.vol,3)+' m³');
+  L.push('Espessura média: '+fmt(esp,4)+' m ('+fmt(esp*100,2)+' cm)');
+  L.push('Toneladas total (calculada): '+fmt(t.ton,2)+' t');
+  L.push('Pesagem dos caminhões: '+fmt(t.cam,2)+' t · diferença '+fmt(t.saldo,2)+' t');
+  return L.join('\n');
 }
 
 /* ---------- util ---------- */
@@ -394,28 +471,32 @@ $('#listCam').addEventListener('click',function(e){var b=e.target.closest('butto
 $('#cpTr').addEventListener('click',function(){copy(tsvTr(),'Trechos copiados')});
 $('#cpCam').addEventListener('click',function(){copy(tsvCam(),'Caminhões copiados')});
 $('#cpRes').addEventListener('click',function(){copy(resumo(),'Resumo copiado')});
-var hdr={cData:'data',cDens:'dens',cFaixa:'faixa',cEquipe:'equipe',cRod:'rod',cCont:'contrato',cTrecho:'trecho',cUsina:'usina',cServ:'serv'};
+var hdr={cEmp:'emp',cData:'data',cDens:'dens',cFaixa:'faixa',cEquipe:'equipe',cRod:'rod',cCont:'contrato',cTrecho:'trecho',cUsina:'usina',cServ:'serv'};
 Object.keys(hdr).forEach(function(id){$('#'+id).addEventListener('input',function(){S.cab[hdr[id]]=this.value;save();renderHead();renderTr();updatePreview()})});
 $('#btnClear').addEventListener('click',function(){S=blank();save();renderAll();toast('Folha em branco')});
 var nT;$('#btnNew').addEventListener('click',function(){var b=this;
-  if(b.dataset.arm){var c=S.cab;S=blank();S.cab.rod=c.rod;S.cab.contrato=c.contrato;S.cab.trecho=c.trecho;S.cab.usina=c.usina;S.cab.serv=c.serv;S.cab.dens=c.dens;S.cab.faixa=c.faixa;S.cab.equipe=c.equipe;
+  if(b.dataset.arm){var c=S.cab;S=blank();S.cab=Object.assign({},c,{data:today(),sentido:'C'});
     save();renderAll();b.dataset.arm='';b.textContent='Limpar folha';toast('Folha nova');return}
   b.dataset.arm='1';b.textContent='Toque de novo para apagar tudo';clearTimeout(nT);nT=setTimeout(function(){b.dataset.arm='';b.textContent='Limpar folha'},3000)});
-window.__caderneta={totals:totals,calc:calc,S:function(){return S}};
+/* menu e histórico */
+function openMenu(){$('#scrim').hidden=false;$('#drawer').hidden=false;$('#btnMenu').setAttribute('aria-expanded','true');$('#navFolha').focus()}
+function closeMenu(){$('#scrim').hidden=true;$('#drawer').hidden=true;$('#btnMenu').setAttribute('aria-expanded','false');$('#btnMenu').focus()}
+$('#btnMenu').addEventListener('click',openMenu);
+$('#scrim').addEventListener('click',closeMenu);
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#drawer').hidden)closeMenu()});
+$('#navFolha').addEventListener('click',function(){setView('folha');closeMenu()});
+$('#navHist').addEventListener('click',function(){setView('hist');closeMenu()});
+$('#btnBack').addEventListener('click',function(){setView('folha')});
+$('#listHist').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.act!=='delh')return;var id=b.dataset.id;
+  arm(b,function(){H=H.filter(function(x){return x.id!==id});saveH();renderHist();toast('Dia excluído do histórico')})});
+window.__caderneta={totals:totals,calc:calc,resumo:resumo,S:function(){return S},H:function(){return H}};
 renderAll();
 })();
 </script>
-
-
 <script>
-// PWA: registro isolado da lógica da Caderneta.
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function () {
-    navigator.serviceWorker.register('./service-worker.js', { scope: './' })
-      .catch(function (error) {
-        console.error('Não foi possível registrar o modo offline da Caderneta:', error);
-      });
-  });
-}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){
+  navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready}).then(function(){
+    var h=document.getElementById('offlineNote');if(h)h.textContent='Pronto para uso sem sinal. Os dados ficam salvos neste celular.'}).catch(function(){})})}
 </script>
-</body></html>
+</body>
+</html>
