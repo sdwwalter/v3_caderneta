@@ -124,6 +124,8 @@ body.hist .tiles,body.hist .status,body.hist .when,body.hist .banner,body.hist .
 .item.hist .main,.item.hist .sub{grid-column:1}.item.hist .big{grid-column:2}
 .item.hist .main{font-family:var(--f-disp);font-size:24px;font-weight:700}
 [hidden]{display:none!important}
+.when{position:relative;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
+.when input[type=date]{position:absolute;inset:0;width:100%;height:100%;min-height:0;padding:0;border:0;opacity:0;font-size:16px}
 
 /* PWA: o que o ambiente do artifact fazia sozinho */
 html,body{margin:0}
@@ -133,7 +135,7 @@ html,body{margin:0}
 <body>
 <div class="wrap">
   <header class="top">
-    <div class="top-row"><button class="menu-btn" id="btnMenu" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg></button><span class="brand" id="brand">Caderneta de Campo</span><span class="when" id="when"></span></div>
+    <div class="top-row"><button class="menu-btn" id="btnMenu" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg></button><span class="brand" id="brand">Caderneta de Campo</span><label class="when" id="whenWrap"><span id="when"></span><input type="date" id="topDate" aria-label="Data da folha. Toque para alterar"></label></div>
     <div class="tiles">
       <div class="tile hero" id="tileSaldo"><small>Saldo (caminhões − trechos)</small><b id="tSaldo">0,00<span>t</span></b></div>
       <div class="tile"><small>Caminhões</small><b id="tCam">0,00<span>t</span></b></div>
@@ -262,6 +264,8 @@ var S;
 try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){S=null}
 if(!S||!S.cab)S=example();
 S.cab=Object.assign({},DEF,{sentido:'C'},S.cab); if(!S.id)S.id=newId();
+/* folha ainda vazia: a data acompanha o dia de hoje */
+if(!S.ex&&!S.tr.length&&!S.trk.length)S.cab.data=today();
 var HKEY='caderneta.hist.v1',H;
 try{H=JSON.parse(localStorage.getItem(HKEY))}catch(e){H=null}
 if(!Array.isArray(H))H=[];
@@ -294,6 +298,7 @@ function totals(){
 function renderHead(){
   var t=totals();
   $('#when').textContent=[brDate(S.cab.data),S.cab.faixa?'Faixa '+S.cab.faixa:''].filter(Boolean).join(' · ');
+  $('#topDate').value=S.cab.data||'';
   $('#tCam').innerHTML=fmt(t.cam,2)+'<span>t</span>';
   $('#tTr').innerHTML=fmt(t.ton,2)+'<span>t</span>';
   $('#tSaldo').innerHTML=fmt(t.saldo,2)+'<span>t</span>';
@@ -489,6 +494,8 @@ $('#navHist').addEventListener('click',function(){setView('hist');closeMenu()});
 $('#btnBack').addEventListener('click',function(){setView('folha')});
 $('#listHist').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||b.dataset.act!=='delh')return;var id=b.dataset.id;
   arm(b,function(){H=H.filter(function(x){return x.id!==id});saveH();renderHist();toast('Dia excluído do histórico')})});
+$('#topDate').addEventListener('click',function(){try{this.showPicker()}catch(e){}});
+$('#topDate').addEventListener('change',function(){if(!this.value)return;S.cab.data=this.value;save();renderAll()});
 window.__caderneta={totals:totals,calc:calc,resumo:resumo,S:function(){return S},H:function(){return H}};
 renderAll();
 })();
