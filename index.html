@@ -126,6 +126,31 @@ body.hist .tiles,body.hist .status,body.hist .when,body.hist .banner,body.hist .
 [hidden]{display:none!important}
 .when{position:relative;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
 .when input[type=date]{position:absolute;inset:0;width:100%;height:100%;min-height:0;padding:0;border:0;opacity:0;font-size:16px}
+/* paleta 2: concreto fosco, cartões off-white, campos brancos (= "toque aqui"), cabeçalho e abas pretos */
+:root{--bg:#e3e5e8;--surface:#f6f7f8;--field:#ffffff}
+body::before{background:var(--ink)}
+.top{background:var(--ink);color:#fff}
+.brand,.when{color:#fff}
+.tile.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.tile.warn{background:var(--warn);border-color:var(--warn);color:#fff}
+.status{padding:7px 10px;border-radius:8px;background:var(--surface);color:var(--ink)}
+.status.ok{background:var(--ok);color:#fff}
+.status.warn{background:var(--warn);color:#fff}
+.tabs{background:var(--ink)}
+.tabs button{background:#1c2026;color:#fff;border-color:#3a4048}
+.tabs button[aria-selected=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tile{color:var(--ink)}
+.menu-btn{color:var(--ink)}
+.when{white-space:pre-line;text-align:right;line-height:1.15;overflow:visible;text-overflow:clip;flex:none}
+.brand{font-size:13px;letter-spacing:.04em}
+.tabs button{font-size:17px}
+.modal{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));overflow-y:auto}
+.modal-card{background:var(--surface);border:3px solid var(--ink);border-radius:18px;padding:18px;width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px}
+.modal-kicker{margin:0;background:var(--accent);color:var(--accent-ink);border:2px solid var(--ink);border-radius:10px;padding:8px 12px;font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase}
+.modal-card h2{margin:0;font-family:var(--f-disp);font-size:40px;line-height:1;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.modal-text{margin:0;font-size:19px;font-weight:600;line-height:1.35}
+.modal-card .btn{min-height:70px}
 
 /* PWA: o que o ambiente do artifact fazia sozinho */
 html,body{margin:0}
@@ -233,6 +258,15 @@ html,body{margin:0}
   <button role="tab" data-t="res" aria-selected="false">Resumo</button>
 </div></nav>
 <div class="toast" id="toast" hidden></div>
+<div class="modal" id="dayModal" role="alertdialog" aria-modal="true" aria-labelledby="dmTitle" hidden>
+  <div class="modal-card">
+    <p class="modal-kicker">Folha de outro dia</p>
+    <h2 id="dmTitle">Começar folha nova?</h2>
+    <p class="modal-text" id="dmText"></p>
+    <button class="btn primary" id="dmNew" type="button">Nova folha de hoje</button>
+    <button class="btn" id="dmKeep" type="button">Continuar essa folha</button>
+  </div>
+</div>
 <button class="scrim" id="scrim" type="button" aria-label="Fechar menu" hidden></button>
 <aside class="drawer" id="drawer" aria-label="Menu" hidden>
   <h2>Menu</h2>
@@ -297,7 +331,7 @@ function totals(){
 /* ---------- renderização ---------- */
 function renderHead(){
   var t=totals();
-  $('#when').textContent=[brDate(S.cab.data),S.cab.faixa?'Faixa '+S.cab.faixa:''].filter(Boolean).join(' · ');
+  $('#when').textContent=[brDate(S.cab.data),S.cab.faixa?'Faixa '+S.cab.faixa:''].filter(Boolean).join('\n');
   $('#topDate').value=S.cab.data||'';
   $('#tCam').innerHTML=fmt(t.cam,2)+'<span>t</span>';
   $('#tTr').innerHTML=fmt(t.ton,2)+'<span>t</span>';
@@ -496,8 +530,28 @@ $('#listHist').addEventListener('click',function(e){var b=e.target.closest('butt
   arm(b,function(){H=H.filter(function(x){return x.id!==id});saveH();renderHist();toast('Dia excluído do histórico')})});
 $('#topDate').addEventListener('click',function(){try{this.showPicker()}catch(e){}});
 $('#topDate').addEventListener('change',function(){if(!this.value)return;S.cab.data=this.value;save();renderAll()});
+/* aviso de folha de outro dia */
+function plural(n,a,b){return n+' '+(n===1?a:b)}
+function checkNewDay(){
+  if(S.ex||(!S.tr.length&&!S.trk.length))return;
+  if(S.cab.data===today()||S.askDay===today())return;
+  try{syncHist()}catch(e){}
+  var t=totals();
+  $('#dmText').textContent='A folha de '+brDate(S.cab.data)+' continua aberta com '+plural(S.trk.length,'caminhão','caminhões')+' e '+plural(S.tr.length,'trecho','trechos')+' ('+fmt(t.ton,2)+' t). Hoje é '+brDate(today())+'. Esse dia já está salvo no histórico.';
+  $('#dayModal').hidden=false;$('#dmNew').focus();
+}
+$('#dmNew').addEventListener('click',function(){
+  try{syncHist()}catch(e){}
+  var c=S.cab,old=brDate(c.data);
+  S=blank();S.cab=Object.assign({},c,{data:today(),sentido:'C'});
+  endEdit();view='folha';tab='tr';document.body.classList.remove('hist');
+  save();$('#dayModal').hidden=true;renderAll();toast('Folha nova. O dia '+old+' ficou no histórico.');
+});
+$('#dmKeep').addEventListener('click',function(){S.askDay=today();save();$('#dayModal').hidden=true;$('#ei').focus()});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)checkNewDay()});
 window.__caderneta={totals:totals,calc:calc,resumo:resumo,S:function(){return S},H:function(){return H}};
 renderAll();
+checkNewDay();
 })();
 </script>
 <script>
