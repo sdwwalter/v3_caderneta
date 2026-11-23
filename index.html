@@ -31,7 +31,7 @@ button,input{font:inherit;color:inherit}
 .num{font-family:var(--f-disp);font-variant-numeric:tabular-nums}
 
 /* cabeçalho fixo: saldo grande à esquerda, caminhões e trechos empilhados à direita */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border:2px solid var(--ink);border-top:0;
+.top{position:relative;z-index:9;background:var(--surface);border:2px solid var(--ink);border-top:0;
   border-radius:0 0 14px 14px;padding:8px 10px 10px}
 .top-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px}
 .brand{font-family:var(--f-disp);font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
@@ -39,13 +39,13 @@ button,input{font:inherit;color:inherit}
 .tiles{display:grid;grid-template-columns:1.3fr 1fr;gap:8px}
 .tile{background:var(--surface);border:2px solid var(--ink);border-radius:10px;padding:4px 10px;min-width:0}
 .tile small{display:block;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.tile b{font-family:var(--f-disp);font-weight:700;font-size:26px;line-height:1.05;font-variant-numeric:tabular-nums}
+.tile b{font-family:var(--f-disp);font-weight:700;font-size:22px;line-height:1.05;font-variant-numeric:tabular-nums}
 .tile b span{font-size:15px;font-weight:700;margin-left:3px}
 .tile.hero{grid-row:1/3;display:flex;flex-direction:column;justify-content:center}
-.tile.hero b{font-size:54px;line-height:1}
+.tile.hero b{font-size:40px;line-height:1}
 .tile.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
 .tile.warn{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
-.status{margin:8px 0 0;font-size:15px;font-weight:700;line-height:1.3}
+.status{margin:6px 0 0;font-size:14px;font-weight:700;line-height:1.3}
 .status.ok{color:var(--ok)} .status.warn{color:var(--warn)}
 
 main{display:flex;flex-direction:column;gap:14px;padding-top:14px}
@@ -312,12 +312,12 @@ function syncHist(){
   if(i>=0)H[i]=e;else H.push(e);
   saveH();
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}try{syncHist()}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}try{syncHist()}catch(e){}try{saveDraft()}catch(e){}}
 
 var lado='D', editing=null, tab='tr';
 function dens(){var d=num(S.cab.dens);return d>0?d:2.57}
 function calc(t){
-  var comp=S.cab.sentido==='D'?(t.ei-t.ef)*20+t.fi-t.ff:(t.ef-t.ei)*20-t.fi+t.ff;
+  var comp=S.cab.sentido==='D'?(t.ei-t.ef)*20-t.fi+t.ff:(t.ef-t.ei)*20-t.fi+t.ff;
   var area=comp*t.larg, vol=area*t.esp;
   return {comp:comp,area:area,vol:vol,ton:vol*dens()};
 }
@@ -389,7 +389,7 @@ function renderRes(){
 function renderSent(){
   var D=S.cab.sentido==='D';
   document.querySelectorAll('#segSent button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.s===S.cab.sentido))});
-  $('#sentHint').textContent=D?'Decrescente: comprimento = (início − final) × 20 + frac. início − frac. final':'Crescente: comprimento = (final − início) × 20 − frac. início + frac. final';
+  $('#sentHint').textContent=D?'Decrescente: comprimento = (início − final) × 20 − frac. início + frac. final (a fração conta no sentido em que você anda)':'Crescente: comprimento = (final − início) × 20 − frac. início + frac. final';
 }
 function renderLado(){document.querySelectorAll('#segLado button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.l===lado))})}
 var view='folha';
@@ -445,7 +445,7 @@ function startEdit(i){
   $('#ei').value=t.ei;$('#fi').value=String(t.fi).replace('.',',');$('#ef').value=t.ef;$('#ff').value=String(t.ff).replace('.',',');
   $('#larg').value=String(t.larg).replace('.',',');$('#esp').value=String(t.esp).replace('.',',');
   $('#formTitle').textContent='Editando trecho '+(i+1);$('#btnAddTr').textContent='Salvar alteração';$('#btnCancelTr').hidden=false;
-  renderLado();updatePreview();window.scrollTo({top:0,behavior:'smooth'});$('#ei').focus();
+  renderLado();updatePreview();saveDraft();window.scrollTo({top:0,behavior:'smooth'});$('#ei').focus();
 }
 
 /* ---------- caminhões ---------- */
@@ -453,7 +453,7 @@ function addCam(){
   var placa=$('#placa').value.trim().toUpperCase(),peso=num($('#peso').value),m=$('#msgCam');
   if(!placa||!(peso>0)){m.textContent='Informe a placa e o peso.';return}
   m.textContent='';S.trk.push({placa:placa,peso:peso});save();
-  $('#placa').value='';$('#peso').value='';renderAll();toast('Caminhão '+S.trk.length+' adicionado');$('#placa').focus();
+  $('#placa').value='';$('#peso').value='';saveDraft();renderAll();toast('Caminhão '+S.trk.length+' adicionado');$('#placa').focus();
 }
 
 /* ---------- copiar ---------- */
@@ -491,16 +491,16 @@ var armT;function arm(btn,fn){
 }
 
 /* ---------- eventos ---------- */
-document.querySelectorAll('.tabs button').forEach(function(b){b.addEventListener('click',function(){tab=b.dataset.t;renderTab();window.scrollTo({top:0})})});
+document.querySelectorAll('.tabs button').forEach(function(b){b.addEventListener('click',function(){tab=b.dataset.t;renderTab();saveDraft();window.scrollTo({top:0})})});
 document.querySelectorAll('#segSent button').forEach(function(b){b.addEventListener('click',function(){S.cab.sentido=b.dataset.s;save();renderAll()})});
-document.querySelectorAll('#segLado button').forEach(function(b){b.addEventListener('click',function(){lado=b.dataset.l;renderLado();updatePreview()})});
+document.querySelectorAll('#segLado button').forEach(function(b){b.addEventListener('click',function(){lado=b.dataset.l;renderLado();updatePreview();saveDraft()})});
 ['ei','fi','ef','ff','larg','esp'].forEach(function(id){$('#'+id).addEventListener('input',updatePreview)});
 function enterFlow(id,last){$('#'+id).addEventListener('keydown',function(e){
   if(e.key!=='Enter')return;e.preventDefault();var n=this.dataset.next;if(n)$('#'+n).focus();else last()})}
 ['ei','fi','ef','ff','larg','esp'].forEach(function(id){enterFlow(id,addTr)});
 ['placa','peso'].forEach(function(id){enterFlow(id,addCam)});
 $('#btnAddTr').addEventListener('click',addTr);
-$('#btnCancelTr').addEventListener('click',function(){endEdit();['ei','fi','ef','ff'].forEach(function(id){$('#'+id).value=''});updatePreview()});
+$('#btnCancelTr').addEventListener('click',function(){endEdit();['ei','fi','ef','ff'].forEach(function(id){$('#'+id).value=''});updatePreview();saveDraft()});
 $('#btnAddCam').addEventListener('click',addCam);
 $('#listTr').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var i=+b.dataset.i;
   if(b.dataset.act==='edit')startEdit(i);
@@ -550,6 +550,23 @@ $('#dmNew').addEventListener('click',function(){
 $('#dmKeep').addEventListener('click',function(){S.askDay=today();save();$('#dayModal').hidden=true;$('#ei').focus()});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)checkNewDay()});
 window.__caderneta={totals:totals,calc:calc,resumo:resumo,S:function(){return S},H:function(){return H}};
+/* rascunho: o que está digitado (e a aba aberta) sobrevive a recarga da página */
+var DKEY='caderneta.rascunho.v1',DIDS=['ei','fi','ef','ff','larg','esp','placa','peso'];
+function saveDraft(){try{var d={lado:lado,editing:editing,tab:tab};DIDS.forEach(function(id){d[id]=$('#'+id).value});localStorage.setItem(DKEY,JSON.stringify(d))}catch(e){}}
+function loadDraft(){
+  var d;try{d=JSON.parse(localStorage.getItem(DKEY))}catch(e){d=null}
+  if(!d||typeof d!=='object')return;
+  DIDS.forEach(function(id){if(typeof d[id]==='string')$('#'+id).value=d[id]});
+  if(d.lado==='D'||d.lado==='E')lado=d.lado;
+  if(['tr','cam','res'].indexOf(d.tab)>=0)tab=d.tab;
+  if(typeof d.editing==='number'&&S.tr[d.editing]){editing=d.editing;
+    $('#formTitle').textContent='Editando trecho '+(editing+1);$('#btnAddTr').textContent='Salvar alteração';$('#btnCancelTr').hidden=false}
+}
+DIDS.forEach(function(id){$('#'+id).addEventListener('input',saveDraft)});
+document.addEventListener('visibilitychange',function(){if(document.hidden)saveDraft()});
+window.addEventListener('pagehide',saveDraft);
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+loadDraft();
 renderAll();
 checkNewDay();
 })();
