@@ -155,6 +155,13 @@ body::before{background:var(--ink)}
 /* PWA: o que o ambiente do artifact fazia sozinho */
 html,body{margin:0}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* calculadora de massa */
+body.calc .tiles,body.calc .status,body.calc .when,body.calc .banner,body.calc .tabs{display:none}
+.calc-hero{background:var(--ink);color:#fff;border-radius:14px;padding:12px 16px;display:flex;flex-direction:column;gap:2px}
+.calc-hero small{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.calc-hero b{font-family:var(--f-disp);font-weight:700;font-size:68px;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.calc-hero b span{font-size:26px;color:#fff;margin-left:6px}
+.hint.bad{color:var(--warn);font-weight:700}
 </style>
 </head>
 <body>
@@ -241,6 +248,27 @@ html,body{margin:0}
       <p class="hint" id="offlineNote" style="text-align:center;margin:16px 0 0">Os dados ficam salvos neste celular.</p>
     </section>
 
+    <!-- CALCULADORA -->
+    <section class="panel" id="p-calc" role="tabpanel" hidden>
+      <button class="btn" id="kBack" type="button">← Voltar para a folha</button>
+      <div class="calc-hero" style="margin-top:14px"><small>Toneladas</small><b id="kTon">—</b></div>
+      <div class="stats" style="margin-top:10px">
+        <div class="stat"><small>Área</small><b id="kArea">—</b><em>m²</em></div>
+        <div class="stat"><small>Volume</small><b id="kVol">—</b><em>m³</em></div>
+      </div>
+      <div class="card" style="margin-top:14px"><h2>Calculadora de massa</h2>
+        <div class="grid2">
+          <div class="f"><label for="kLarg">Largura (m)</label><input id="kLarg" inputmode="decimal" placeholder="3,50" data-next="kComp" enterkeyhint="next" autocomplete="off"></div>
+          <div class="f"><label for="kComp">Comprimento (m)</label><input id="kComp" inputmode="decimal" placeholder="45,0" data-next="kEsp" enterkeyhint="next" autocomplete="off"></div>
+          <div class="f"><label for="kEsp">Espessura (m)</label><input id="kEsp" inputmode="decimal" placeholder="0,0705" data-next="kDens" enterkeyhint="next" autocomplete="off"></div>
+          <div class="f"><label for="kDens">Densidade (t/m³)</label><input id="kDens" inputmode="decimal" placeholder="2,57" enterkeyhint="done" autocomplete="off"></div>
+        </div>
+        <p class="hint" id="kHint"></p>
+        <p class="hint">Toneladas = largura × comprimento × espessura × densidade. Não altera a folha do dia.</p>
+        <button class="btn" id="kClear" type="button">Limpar medidas</button>
+      </div>
+    </section>
+
     <!-- HISTÓRICO -->
     <section class="panel" id="p-hist" role="tabpanel" hidden>
       <button class="btn" id="btnBack" type="button">← Voltar para a folha</button>
@@ -271,6 +299,7 @@ html,body{margin:0}
 <aside class="drawer" id="drawer" aria-label="Menu" hidden>
   <h2>Menu</h2>
   <button class="nav" id="navFolha" type="button">Folha atual<small>Lançar trechos e caminhões</small></button>
+  <button class="nav" id="navCalc" type="button">Calculadora de massa<small>Largura, comprimento, espessura e densidade</small></button>
   <button class="nav" id="navHist" type="button">Histórico de dias<small>Toneladas, caminhões e área por dia</small></button>
 </aside>
 
@@ -394,14 +423,16 @@ function renderSent(){
 function renderLado(){document.querySelectorAll('#segLado button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.l===lado))})}
 var view='folha';
 function renderTab(){
-  ['tr','cam','res','hist'].forEach(function(k){$('#p-'+k).hidden=(view==='hist'?k!=='hist':k!==tab)});
+  ['tr','cam','res','hist','calc'].forEach(function(k){$('#p-'+k).hidden=(view==='folha'?k!==tab:k!==view)});
   document.querySelectorAll('.tabs button').forEach(function(b){b.setAttribute('aria-selected',String(b.dataset.t===tab))});
   document.body.classList.toggle('hist',view==='hist');
-  $('#brand').textContent=view==='hist'?'Histórico de dias':'Caderneta de Campo';
+  document.body.classList.toggle('calc',view==='calc');
+  $('#brand').textContent=view==='hist'?'Histórico de dias':(view==='calc'?'Calculadora de massa':'Caderneta de Campo');
+  $('#navCalc').setAttribute('aria-current',view==='calc'?'page':'false');
   $('#navFolha').setAttribute('aria-current',view==='folha'?'page':'false');
   $('#navHist').setAttribute('aria-current',view==='hist'?'page':'false');
 }
-function setView(v){view=v;renderTab();if(v==='hist')renderHist();window.scrollTo({top:0})}
+function setView(v){view=v;renderTab();if(v==='hist')renderHist();if(v==='calc')renderCalc();window.scrollTo({top:0})}
 function renderHist(){
   var L=H.slice().sort(function(a,b){return a.data<b.data?1:(a.data>b.data?-1:0)});
   var sT=0,sC=0,sA=0;L.forEach(function(e){sT+=e.ton;sC+=e.cam;sA+=e.area});
@@ -517,6 +548,31 @@ var nT;$('#btnNew').addEventListener('click',function(){var b=this;
   if(b.dataset.arm){var c=S.cab;S=blank();S.cab=Object.assign({},c,{data:today(),sentido:'C'});
     save();renderAll();b.dataset.arm='';b.textContent='Limpar folha';toast('Folha nova');return}
   b.dataset.arm='1';b.textContent='Toque de novo para apagar tudo';clearTimeout(nT);nT=setTimeout(function(){b.dataset.arm='';b.textContent='Limpar folha'},3000)});
+/* calculadora de massa: o que foi digitado sobrevive a recarga */
+var CKEY='caderneta.calc.v1',CIDS=['kLarg','kComp','kEsp','kDens'];
+function saveCalc(){try{var d={};CIDS.forEach(function(id){d[id]=$('#'+id).value});localStorage.setItem(CKEY,JSON.stringify(d))}catch(e){}}
+function renderCalc(){
+  var larg=num($('#kLarg').value),comp=num($('#kComp').value),esp=num($('#kEsp').value),d=num($('#kDens').value);
+  var okDim=larg>0&&comp>0, okEsp=esp>0&&esp<1, area=larg*comp, vol=area*esp, ton=vol*d, dash='—';
+  $('#kTon').innerHTML=(okDim&&okEsp&&d>0)?fmt(ton,2)+'<span>t</span>':dash;
+  $('#kArea').textContent=okDim?fmt(area,2):dash;
+  $('#kVol').textContent=(okDim&&okEsp)?fmt(vol,3):dash;
+  var h=$('#kHint');
+  h.textContent=esp>=1?'Espessura em metros, por exemplo 0,0705.':(esp>0?'Espessura '+fmt(esp,4)+' m = '+fmt(esp*100,2)+' cm':'Espessura em metros (7 cm = 0,07).');
+  h.className='hint'+(esp>=1?' bad':'');
+}
+function loadCalc(){
+  var d=null;try{d=JSON.parse(localStorage.getItem(CKEY))}catch(e){}
+  CIDS.forEach(function(id){if(d&&typeof d[id]==='string')$('#'+id).value=d[id]});
+  if(!$('#kDens').value)$('#kDens').value=S.cab.dens||'2,57';
+  renderCalc();
+}
+CIDS.forEach(function(id){$('#'+id).addEventListener('input',function(){saveCalc();renderCalc()});enterFlow(id,function(){$('#'+id).blur()})});
+$('#kClear').addEventListener('click',function(){['kLarg','kComp','kEsp'].forEach(function(id){$('#'+id).value=''});saveCalc();renderCalc();$('#kLarg').focus()});
+$('#kBack').addEventListener('click',function(){setView('folha')});
+$('#navCalc').addEventListener('click',function(){setView('calc');closeMenu()});
+loadCalc();
+
 /* menu e histórico */
 function openMenu(){$('#scrim').hidden=false;$('#drawer').hidden=false;$('#btnMenu').setAttribute('aria-expanded','true');$('#navFolha').focus()}
 function closeMenu(){$('#scrim').hidden=true;$('#drawer').hidden=true;$('#btnMenu').setAttribute('aria-expanded','false');$('#btnMenu').focus()}
