@@ -1,6 +1,6 @@
 /* Caderneta de Campo: cache offline.
    Para publicar uma versão nova, troque o número em VERSAO e envie os arquivos de novo. */
-var VERSAO='caderneta-v5';
+var VERSAO='caderneta-v6';
 var NUCLEO=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png'];
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(VERSAO).then(function(c){return c.addAll(NUCLEO)}).then(function(){return self.skipWaiting()}));
